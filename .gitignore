@@ -1,0 +1,35 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# TensorFlow runtime junk
+events.out.tfevents*
+checkpoint
+*.ckpt.index
+*.ckpt.data-*
+
+# Large repeated training checkpoints (keep folder, ignore contents)
+training/**/ckpt-*
+training/**/checkpoint
+
+# Pretrained archives (keep extracted models)
+*.tar.gz
+
+# Inference frame spam (keep video/gif, ignore per-frame PNGs)
+inference_output/frame_*.png
+
+# ---- Prevent GitHub 100MB limit ----
+pretrained_models/**/saved_model/variables/variables.data-*
+pretrained_models/**/saved_model/variables/variables.index
+pretrained_models/**/*.data-*
+pretrained_models/**/*.index
+pretrained_models/**/checkpoint
