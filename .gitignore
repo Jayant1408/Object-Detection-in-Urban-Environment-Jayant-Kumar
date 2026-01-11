@@ -33,3 +33,11 @@ pretrained_models/**/saved_model/variables/variables.index
 pretrained_models/**/*.data-*
 pretrained_models/**/*.index
 pretrained_models/**/checkpoint
+
+# Pretrained model folders (too large for GitHub; keep only README.md)
+pretrained_models/*
+!pretrained_models/README.md
+
+# Pretrained model folders (too large for GitHub; keep only README.md)
+pretrained_models/*
+!pretrained_models/README.md
