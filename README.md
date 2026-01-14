@@ -142,24 +142,44 @@ Given the CPU-only training setup and batch size of 1, the achieved performance 
 
 ---
 
-## 6. Improving Model Performance
+## 6. Qualitative Inference Results
 
-Several strategies could further improve detection performance:
-
-- Training with GPU acceleration to support larger batch sizes
-- Applying stronger data augmentation techniques (random cropping, scaling, motion blur)
-- Increasing the number of training steps
-- Fine-tuning anchor sizes and aspect ratios
-- Using higher input resolutions to improve small object detection
-- Addressing class imbalance in the dataset
-
----
-
-## 7. Qualitative Inference Results
+Qualitative analysis complements quantitative metrics by highlighting model behavior in dense and challenging urban scenes.
 
 In addition to quantitative evaluation using COCO metrics, qualitative inference results were examined to compare detection coverage and localization quality across models. Inference was performed on the same set of test frames for all three models to ensure a fair comparison.
 
-### 7.1 Image-Based Inference Comparison
+### Faster R-CNN Inference Results
+
+The following examples show qualitative inference results produced by the deployed Faster R-CNN ResNet50 model using a SageMaker endpoint.
+
+<p align="center">
+  <img src="assets/inference_images/deployed_faster_rcnn_resnet50/frame_40.png" width="850">
+</p>
+
+<p align="center">
+  <img src="assets/inference_images/deployed_faster_rcnn_resnet50/frame_85.png" width="850">
+</p>
+
+The Faster R-CNN model demonstrates:
+- Higher recall for distant vehicles and pedestrians
+- More stable and tightly localized bounding boxes
+- Improved detection in crowded and partially occluded scenes
+
+These observations are consistent with the higher COCO mAP scores achieved by the model.
+
+
+### Deployed Model Video-Based Inference Results
+
+An output video was generated from the annotated inference frames produced by the deployed Faster R-CNN model.
+
+▶ **Inference video:**  
+[`assets/inference_videos/deployed_faster_rcnn_resnet50/output.mp4`](assets/inference_videos/deployed_faster_rcnn_resnet50/output.mp4)
+
+The video demonstrates improved temporal stability of detections across consecutive frames, with consistent bounding boxes and reduced flickering compared to single-stage detectors.
+
+
+
+### Cross-Model Image-Based Inference Comparison
 
 Representative frames from urban driving scenes are shown below. These examples highlight differences in object coverage, small object detection, and bounding box stability.
 
@@ -180,50 +200,21 @@ The SSD baseline detects prominent vehicles but misses several small or distant 
 EfficientDet improves detection coverage compared to SSD and produces more stable bounding boxes. However, it still fails to consistently detect smaller or partially occluded objects.
 
 <p align="center">
-  <img src="assets/inference_images/faster_rcnn_resnet50/frame_40.png" width="850">
+  <img src="assets/inference_images/deployed_faster_rcnn_resnet50/frame_40.png" width="850">
 </p>
 
 **Faster R-CNN ResNet50:**  
 Faster R-CNN detects the highest number of objects and produces tighter, more stable bounding boxes. It performs noticeably better in crowded scenes and for small or distant objects, aligning with its superior COCO mAP scores.
 
-### 7.2 Video-Based Inference
+### Cross-Model Video-Based Inference Comparison
 
 Inference videos were generated for all three models using the same sequence of test frames. The Faster R-CNN ResNet50 video demonstrates improved detection consistency and more stable bounding boxes across consecutive frames when compared to SSD MobileNet and EfficientDet-D1.
 
 The generated inference videos are available in the `assets/inference_videos/` directory.
 
-## 8. Model Improvements
+---
 
-While the evaluated models achieved reasonable performance given the constraints of CPU-only training and limited batch size, several strategies could further improve detection accuracy and robustness in urban environments.
-
-### Training and Optimization Improvements
-
-- **GPU-accelerated training:** Training on GPUs would allow for larger batch sizes, more stable gradient estimates, and faster convergence, potentially improving overall detection accuracy.
-- **Longer training schedules:** Increasing the number of training steps would enable deeper models such as Faster R-CNN to better refine region proposals and classification boundaries.
-- **Learning rate tuning:** Further tuning of the cosine decay schedule, including warm-up steps and lower final learning rates, could improve convergence stability.
-
-### Data and Augmentation Improvements
-
-- **Stronger data augmentation:** Applying augmentations such as random scaling, cropping, motion blur, and brightness variation would improve model robustness to real-world urban conditions.
-- **Improved small object representation:** Oversampling frames with small pedestrians or cyclists or using scale-aware augmentation could help mitigate performance degradation on small objects.
-- **Class balancing:** Addressing class imbalance through reweighting or sampling strategies could improve recall for underrepresented object classes.
-
-### Model Architecture Improvements
-
-- **Anchor optimization:** Fine-tuning anchor sizes and aspect ratios based on dataset statistics could improve localization accuracy, especially for pedestrians and cyclists.
-- **Higher-resolution inputs:** Training with larger input resolutions may improve small object detection at the cost of increased computational requirements.
-- **Advanced architectures:** Exploring newer architectures (e.g., EfficientDet variants with larger compound scaling or transformer-based detectors) could further improve accuracy.
-
-### Deployment-Oriented Improvements
-
-- **Model quantization:** Applying post-training quantization could reduce inference latency while maintaining acceptable accuracy.
-- **Batch inference optimization:** Optimizing inference pipelines for batch processing could improve throughput in deployment scenarios.
-- **Real-time constraints:** For real-time applications, exploring model compression or hybrid pipelines could help balance accuracy and speed.
-
-Overall, these improvements highlight potential directions for extending this work beyond the current project scope and adapting the models for production-level autonomous driving systems.
-
-
-## 9. Choosing the Best Model for Deployment
+## 7. Choosing the Best Model for Deployment
 
 Based on both quantitative metrics and qualitative inference results, **Faster R-CNN ResNet50** was selected as the best model for deployment.
 
@@ -237,21 +228,76 @@ Although Faster R-CNN is computationally more expensive, its improved detection 
 
 ---
 
-## 10. Model Deployment
+## 8. Model Deployment
 
-The selected Faster R-CNN model was deployed using AWS SageMaker by completing the `2_deploy_model.ipynb` notebook. The trained model artifacts were packaged and uploaded to S3, after which a SageMaker endpoint was created for inference.
+The selected Faster R-CNN ResNet50 model was deployed using AWS SageMaker by completing the `2_deploy_model.ipynb` notebook. The trained model artifacts were packaged into a `model.tar.gz` file and uploaded to Amazon S3, after which a TensorFlow Serving–based SageMaker endpoint was created.
 
-The deployed model was used to perform inference on video data, successfully generating output videos containing detections for vehicles, pedestrians, and cyclists, thereby satisfying the deployment requirements of the project.
+Inference was performed by sending HTTP requests to the deployed endpoint, with predictions returned in JSON format and post-processed to generate annotated frames and an output video. The deployed model successfully produced detections for vehicles, pedestrians, and cyclists on urban driving scenes, thereby satisfying the deployment requirements of the project.
+
+
+### Deployment Notebook
+
+Model deployment and endpoint-based inference were performed using AWS SageMaker.  
+The complete deployment workflow is documented in the following notebook:
+
+- **Deployment notebook:** `2_deploy_model.ipynb`
+
+This notebook covers:
+- Uploading the trained Faster R-CNN model (`model.tar.gz`) to Amazon S3
+- Creating a TensorFlow Serving SageMaker endpoint
+- Running inference by invoking the endpoint on test frames
+- Generating annotated output frames and a video
+- Cleaning up AWS resources after inference
+
+The notebook was executed end-to-end to produce the final deployment results included below.
 
 ---
 
-## 11. Conclusion
+## 9. Future Work and Model Improvements
 
-This project highlights the importance of systematic model evaluation and selection in object detection tasks for autonomous driving. While lightweight models such as SSD MobileNet offer fast inference, more complex architectures like Faster R-CNN provide significantly improved accuracy and localization performance. Through careful experimentation and analysis, Faster R-CNN ResNet50 was identified as the most effective model under the given constraints.
+While the evaluated models achieved strong performance given the constraints of CPU-only training and limited batch size, several opportunities exist to further improve detection accuracy, robustness, and deployment efficiency in urban driving environments.
+
+### Training and Optimization Improvements
+
+- **GPU-accelerated training:** Leveraging GPU resources would enable larger batch sizes, more stable gradient estimates, and faster convergence, potentially improving overall detection performance.
+- **Longer training schedules:** Increasing the number of training steps would allow deeper models such as Faster R-CNN to further refine region proposals and classification boundaries.
+- **Learning rate tuning:** Additional tuning of the cosine decay learning rate schedule, including warm-up phases and lower final learning rates, could improve convergence stability and final accuracy.
+
+### Data and Augmentation Improvements
+
+- **Stronger data augmentation:** Applying augmentations such as random scaling, cropping, motion blur, and brightness variation would improve robustness to real-world urban conditions.
+- **Improved small object representation:** Oversampling frames containing small pedestrians or cyclists, or using scale-aware augmentation strategies, could help mitigate performance degradation on small objects.
+- **Class balancing:** Addressing dataset class imbalance through reweighting or sampling strategies could improve recall for underrepresented object classes.
+
+### Model Architecture Improvements
+
+- **Anchor optimization:** Fine-tuning anchor sizes and aspect ratios based on dataset statistics could improve localization accuracy, particularly for pedestrians and cyclists.
+- **Higher-resolution inputs:** Training with larger input resolutions may improve small object detection at the cost of increased computational requirements.
+- **Advanced architectures:** Exploring newer architectures such as larger EfficientDet variants or transformer-based detectors could further improve detection accuracy.
+
+### Deployment-Oriented Improvements
+
+- **Model quantization:** Applying post-training quantization could reduce inference latency while maintaining acceptable accuracy.
+- **Batch inference optimization:** Optimizing inference pipelines for batch processing could improve throughput in deployment scenarios.
+- **Real-time constraints:** For real-time applications, exploring model compression or hybrid pipelines could help balance accuracy and inference speed.
+
+Overall, these improvements represent natural extensions of this project and provide clear directions for adapting the models toward production-level autonomous driving systems.
+
 
 ---
 
-## 12. References
+## 10. Conclusion
+
+This project highlights the importance of systematic model evaluation and selection in object detection tasks for autonomous driving. 
+
+While lightweight models such as SSD MobileNet offer fast inference, more complex architectures like Faster R-CNN provide significantly improved accuracy and localization performance. Through careful experimentation and analysis, Faster R-CNN ResNet50 was identified as the most effective model under the given constraints.
+
+Future work will focus on GPU-accelerated training and modern detector architectures to further improve robustness in dense urban environments
+
+
+---
+
+## 11. References
 
 - TensorFlow 2 Object Detection API  
 - Udacity Self-Driving Car Engineer Nanodegree (ND0013)

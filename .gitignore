@@ -45,3 +45,6 @@ pretrained_models/*
 # Exported models (too large for GitHub)
 exported-models/*
 !exported-models/README.md
+
+# SageMaker / deployed model artifacts (too large)
+sm_model/
