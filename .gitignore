@@ -41,3 +41,7 @@ pretrained_models/*
 # Pretrained model folders (too large for GitHub; keep only README.md)
 pretrained_models/*
 !pretrained_models/README.md
+
+# Exported models (too large for GitHub)
+exported-models/*
+!exported-models/README.md
